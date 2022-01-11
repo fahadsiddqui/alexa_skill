@@ -5,16 +5,18 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.mjs",
-    "start": "node server.mjs"
+    "dev": "nodemon dbserver.mjs",
+    "start": "node dbserver.mjs"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "ask-sdk-core": "^2.11.0",
     "ask-sdk-express-adapter": "^2.11.0",
+    "ask-sdk-model": "^1.37.1",
+    "axios": "^0.24.0",
     "express": "^4.17.2",
-    "morgan": "^1.10.0",
-    "ask-sdk-model":"^1.37.1"
+    "mongoose": "^6.1.6",
+    "morgan": "^1.10.0"
   }
 }
