@@ -74,158 +74,152 @@ const showMenuHandler = {
 };
 
 
-const deviceIdHandler = {
-  canHandle(handlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deviceId';
-  },
-  handle(handlerInput) {
+// const deviceIdHandler = {
+//   canHandle(handlerInput) {
+//     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+//       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deviceId';
+//   },
+//   handle(handlerInput) {
 
-    let deviceId = Alexa.getDeviceId(handlerInput.requestEnvelope)
-    let userId = Alexa.getUserId(handlerInput.requestEnvelope)
+//     let deviceId = Alexa.getDeviceId(handlerInput.requestEnvelope)
+//     let userId = Alexa.getUserId(handlerInput.requestEnvelope)
 
-    console.log("deviceId: ", deviceId); // amzn1.ask.device.AEIIZKO24SOSURK7U32HYTGXRQND5VMWQTKZDZOVVKFVIBTHIDTGJNXGQLO5TKAITDM756X5AHOESWLLKZADIMJOAM43RKPADYXEHRMI7V6ESJPWWHE34E37GPJHHG2UVZSTUKF3XJUWD5FINAUTKIB5QBIQ
-    const speakOutput = `your device id is: ${deviceId} \n\n\nand your user id is: ${userId}`
+//     console.log("deviceId: ", deviceId); // amzn1.ask.device.AEIIZKO24SOSURK7U32HYTGXRQND5VMWQTKZDZOVVKFVIBTHIDTGJNXGQLO5TKAITDM756X5AHOESWLLKZADIMJOAM43RKPADYXEHRMI7V6ESJPWWHE34E37GPJHHG2UVZSTUKF3XJUWD5FINAUTKIB5QBIQ
+//     const speakOutput = `your device id is: ${deviceId} \n\n\nand your user id is: ${userId}`
 
-    return handlerInput.responseBuilder
-      .speak(speakOutput)
-      .reprompt(speakOutput)
-      .getResponse();
-  }
-};
+//     return handlerInput.responseBuilder
+//       .speak(speakOutput)
+//       .reprompt(speakOutput)
+//       .getResponse();
+//   }
+// };
 
-const EmailIntentHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'EmailIntent';
-  },
-  async handle(handlerInput) {
-    const { serviceClientFactory, responseBuilder } = handlerInput;
+// const EmailIntentHandler = {
+//   canHandle(handlerInput) {
+//     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+//       && handlerInput.requestEnvelope.request.intent.name === 'EmailIntent';
+//   },
+//   async handle(handlerInput) {
+//     const { serviceClientFactory, responseBuilder } = handlerInput;
 
-    const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
-    console.log("apiAccessToken: ", apiAccessToken);
+//     const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
+//     console.log("apiAccessToken: ", apiAccessToken);
 
-    try {
-      // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
+//     try {
+//       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
 
-      const responseArray = await Promise.all([
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-      ])
+//       const responseArray = await Promise.all([
+//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
+//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+//         ),
+//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
+//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+//         ),
+//       ])
 
-      const email = responseArray[0].data;
-      const name = responseArray[1].data;
-      console.log("email: ", email);
+//       const email = responseArray[0].data;
+//       const name = responseArray[1].data;
+//       console.log("email: ", email);
 
-      if (!email) {
-        return handlerInput.responseBuilder
-          .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
-          .getResponse();
-      }
-      return handlerInput.responseBuilder
-        .speak(`Dear ${name}, your email is: ${email}`)
-        .getResponse();
+//       if (!email) {
+//         return handlerInput.responseBuilder
+//           .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
+//           .getResponse();
+//       }
+//       return handlerInput.responseBuilder
+//         .speak(`Dear ${name}, your email is: ${email}`)
+//         .getResponse();
 
-    } catch (error) {
-      console.log("error code: ", error.response.status);
+//     } catch (error) {
+//       console.log("error code: ", error.response.status);
 
-      if (error.response.status === 403) {
-        return responseBuilder
-          .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
-          .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
-          .getResponse();
-      }
-      return responseBuilder
-        .speak('Uh Oh. Looks like something went wrong.')
-        .getResponse();
-    }
-  }
-}
+//       if (error.response.status === 403) {
+//         return responseBuilder
+//           .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
+//           .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
+//           .getResponse();
+//       }
+//       return responseBuilder
+//         .speak('Uh Oh. Looks like something went wrong.')
+//         .getResponse();
+//     }
+//   }
+// }
 
-const PlaceOrderIntentHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'PlaceOrder';
-  },
-  async handle(handlerInput) {
-
-
-    const slots = handlerInput
-      .requestEnvelope
-      .request
-      .intent
-      .slots;
-
-    const dishName = slots.dish.value;
-    const qty = parseInt(slots.qty.value);
-
-    console.log("dishName: ", dishName);
-    console.log("qty: ", qty);
+// const PlaceOrderIntentHandler = {
+//   canHandle(handlerInput) {
+//     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+//       && handlerInput.requestEnvelope.request.intent.name === 'PlaceOrder';
+//   },
+//   async handle(handlerInput) {
 
 
+//     const slots = handlerInput
+//       .requestEnvelope
+//       .request
+//       .intent
+//       .slots;
 
+//     const dishName = slots.dish.value;
+//     const qty = parseInt(slots.qty.value);
 
+//     console.log("dishName: ", dishName);
+//     console.log("qty: ", qty);
 
+//     const { serviceClientFactory, responseBuilder } = handlerInput;
 
+//     const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
+//     console.log("apiAccessToken: ", apiAccessToken);
 
-    const { serviceClientFactory, responseBuilder } = handlerInput;
+//     try {
+//       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
 
-    const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
-    console.log("apiAccessToken: ", apiAccessToken);
+//       const responseArray = await Promise.all([
+//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
+//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+//         ),
+//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
+//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+//         ),
+//       ])
 
-    try {
-      // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
+//       const email = responseArray[0].data;
+//       const name = responseArray[1].data;
+//       console.log("email: ", email);
 
-      const responseArray = await Promise.all([
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-      ])
+//       if (!email) {
+//         return handlerInput.responseBuilder
+//           .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
+//           .getResponse();
+//       }
+//       return handlerInput.responseBuilder
+//         .speak(`Dear ${name}, your email is: ${email}`)
+//         .getResponse();
 
-      const email = responseArray[0].data;
-      const name = responseArray[1].data;
-      console.log("email: ", email);
+//     } catch (error) {
+//       console.log("error code: ", error.response.status);
 
-      if (!email) {
-        return handlerInput.responseBuilder
-          .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
-          .getResponse();
-      }
-      return handlerInput.responseBuilder
-        .speak(`Dear ${name}, your email is: ${email}`)
-        .getResponse();
-
-    } catch (error) {
-      console.log("error code: ", error.response.status);
-
-      if (error.response.status === 403) {
-        return responseBuilder
-          .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
-          .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
-          .getResponse();
-      }
-      return responseBuilder
-        .speak('Uh Oh. Looks like something went wrong.')
-        .getResponse();
-    }
-  }
-}
+//       if (error.response.status === 403) {
+//         return responseBuilder
+//           .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
+//           .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
+//           .getResponse();
+//       }
+//       return responseBuilder
+//         .speak('Uh Oh. Looks like something went wrong.')
+//         .getResponse();
+//     }
+//   }
+// }
 
 
 const skillBuilder = SkillBuilders.custom()
   .addRequestHandlers(
     LaunchRequestHandler,
     showMenuHandler,
-    EmailIntentHandler,
-    deviceIdHandler,
-    PlaceOrderIntentHandler
+    // EmailIntentHandler,
+    // deviceIdHandler,
+    // PlaceOrderIntentHandler
   )
   .addErrorHandlers(
     ErrorHandler
