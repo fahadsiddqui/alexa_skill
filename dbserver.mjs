@@ -176,31 +176,34 @@ const PlaceOrderHandler = {
 
     const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
     console.log("apiAccessToken: ", apiAccessToken);
+    const name = "Fahad Siddiqui";
+    const email = "fahadsiddiqui88@gmail.com";
 
     try {
       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
 
-      const responseArray = await Promise.all([
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
-          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-        ),
-      ])
+      // const responseArray = await Promise.all([
+      //   axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
+      //     { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+      //   ),
+      //   axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
+      //     { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+      //   ),
+      // ])
 
-      const email = responseArray[0].data;
-      const name = responseArray[1].data;
-      console.log("email: ", email);
+      // const email = responseArray[0].data;
+      // const name = responseArray[1].data;
+      // console.log("email: ", email);
 
-      if (!email) {
-        return handlerInput.responseBuilder
-          .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
-          .getResponse();
-      }
+      // if (!email) {
+      //   return handlerInput.responseBuilder
+      //     .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
+      //     .getResponse();
+      // }
+
       var newOrder = new Order({
-        userName: "Fahad Siddiqui",
-        email: "fahadsiddiqui88@gmail.com",
+        userName: name,
+        email: email,
         order:"",
       }).save();
 
