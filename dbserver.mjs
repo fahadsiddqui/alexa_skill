@@ -15,6 +15,13 @@ const Usage = mongoose.model('Usage', {
   createdOn: { type: Date, default: Date.now },
 });
 
+const Order = mongoose.model('Order', {
+  userName: String,
+  email: String,
+  order: String,
+  createdOn: { type: Date, default: Date.now },
+});
+
 const app = express();
 app.use(morgan("dev"))
 const PORT = process.env.PORT || 3000;
@@ -191,6 +198,12 @@ const PlaceOrderHandler = {
           .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
           .getResponse();
       }
+      var newOrder = new Order({
+        userName: "Fahad Siddiqui",
+        email: "fahadsiddiqui88@gmail.com",
+        order:"",
+      }).save();
+
       return handlerInput.responseBuilder
         .speak(`Dear ${name}, your email is: ${email}`)
         .getResponse();
