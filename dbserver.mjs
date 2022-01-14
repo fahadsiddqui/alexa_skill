@@ -172,10 +172,10 @@ const PlaceOrderHandler = {
     console.log("dishName: ", dishName);
     console.log("qty: ", qty);
 
-    const { serviceClientFactory, responseBuilder } = handlerInput;
+    // const { serviceClientFactory, responseBuilder } = handlerInput;
 
-    const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
-    console.log("apiAccessToken: ", apiAccessToken);
+    // const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
+    // console.log("apiAccessToken: ", apiAccessToken);
     const name = "Fahad Siddiqui";
     const email = "fahadsiddiqui88@gmail.com";
 
