@@ -167,7 +167,7 @@ const PlaceOrderHandler = {
       .slots;
 
     const dishName = slots.dish.value;
-    const qty = parseInt(slots.qty.value);
+    const qty = parseInt(slots.qty.value) || 1;
 
     console.log("dishName: ", dishName);
     console.log("qty: ", qty);
@@ -201,14 +201,15 @@ const PlaceOrderHandler = {
       //     .getResponse();
       // }
 
+      const order = `Mr ${name} your order for ${dishName} ${qty} quantity this is placed. You will soon get a call for confirmation! Thank you for order`;
       var newOrder = new Order({
         userName: name,
         email: email,
-        order:"",
+        order:order,
       }).save();
 
       return handlerInput.responseBuilder
-        .speak(`Dear ${name}, your email is: ${email}`)
+        .speak(order)
         .getResponse();
 
     } catch (error) {
