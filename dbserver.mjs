@@ -22,6 +22,16 @@ const Order = mongoose.model('Order', {
   createdOn: { type: Date, default: Date.now },
 });
 
+const Cart = mongoose.model('Cart', {
+  items: [{
+    dishName: String,
+    quantity: Number
+  }],
+  email: String,
+  customerName: String,
+  createdOn: { type: Date, default: Date.now },
+});
+
 const app = express();
 app.use(morgan("dev"))
 const PORT = process.env.PORT || 3000;
@@ -80,85 +90,13 @@ const showMenuHandler = {
   }
 };
 
-
-// const deviceIdHandler = {
-//   canHandle(handlerInput) {
-//     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-//       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deviceId';
-//   },
-//   handle(handlerInput) {
-
-//     let deviceId = Alexa.getDeviceId(handlerInput.requestEnvelope)
-//     let userId = Alexa.getUserId(handlerInput.requestEnvelope)
-
-//     console.log("deviceId: ", deviceId); // amzn1.ask.device.AEIIZKO24SOSURK7U32HYTGXRQND5VMWQTKZDZOVVKFVIBTHIDTGJNXGQLO5TKAITDM756X5AHOESWLLKZADIMJOAM43RKPADYXEHRMI7V6ESJPWWHE34E37GPJHHG2UVZSTUKF3XJUWD5FINAUTKIB5QBIQ
-//     const speakOutput = `your device id is: ${deviceId} \n\n\nand your user id is: ${userId}`
-
-//     return handlerInput.responseBuilder
-//       .speak(speakOutput)
-//       .reprompt(speakOutput)
-//       .getResponse();
-//   }
-// };
-
-// const EmailIntentHandler = {
-//   canHandle(handlerInput) {
-//     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-//       && handlerInput.requestEnvelope.request.intent.name === 'EmailIntent';
-//   },
-//   async handle(handlerInput) {
-//     const { serviceClientFactory, responseBuilder } = handlerInput;
-
-//     const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
-//     console.log("apiAccessToken: ", apiAccessToken);
-
-//     try {
-//       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
-
-//       const responseArray = await Promise.all([
-//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
-//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-//         ),
-//         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
-//           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-//         ),
-//       ])
-
-//       const email = responseArray[0].data;
-//       const name = responseArray[1].data;
-//       console.log("email: ", email);
-
-//       if (!email) {
-//         return handlerInput.responseBuilder
-//           .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
-//           .getResponse();
-//       }
-//       return handlerInput.responseBuilder
-//         .speak(`Dear ${name}, your email is: ${email}`)
-//         .getResponse();
-
-//     } catch (error) {
-//       console.log("error code: ", error.response.status);
-
-//       if (error.response.status === 403) {
-//         return responseBuilder
-//           .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
-//           .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
-//           .getResponse();
-//       }
-//       return responseBuilder
-//         .speak('Uh Oh. Looks like something went wrong.')
-//         .getResponse();
-//     }
-//   }
-// }
-
 const PlaceOrderHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'PlaceOrder';
   },
   async handle(handlerInput) {
+
 
     const slots = handlerInput
       .requestEnvelope
@@ -167,52 +105,87 @@ const PlaceOrderHandler = {
       .slots;
 
     const dishName = slots.dish.value;
-    const qty = parseInt(slots.qty.value) || 1;
+    const qty = parseInt(slots.qty.value) | 1;
 
     console.log("dishName: ", dishName);
     console.log("qty: ", qty);
 
-    // const { serviceClientFactory, responseBuilder } = handlerInput;
+    if (!dishName) {
+      const cardText = '1. Chinese Chopsuey \n2. Chicken Chowmein \n3. Fried Rice Chicken \n4. Classic Chilli Chicken Dry \n5. Ginsoy Special Chicken \n6. Dragon Chicken.';
 
-    // const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
-    // console.log("apiAccessToken: ", apiAccessToken);
-    const name = "Fahad Siddiqui";
-    const email = "fahadsiddiqui88@gmail.com";
+      return handlerInput.responseBuilder
+        .speak(`please tell me dish name. or you can ask for the menu.`)
+        .reprompt(`please tell me dish name. or you can ask for the menu.`)
+        .withSimpleCard("Our Menu", cardText)
+        .getResponse();
+    }
+    if (!qty) {
+
+      return handlerInput.responseBuilder
+        .speak(`how many ${dishName} would you like to order?`)
+        .reprompt(`how many ${dishName} would you like to order?`)
+        .withSimpleCard("Placing order", `how many ${dishName}?`)
+        .getResponse();
+
+    }
+
+    const { serviceClientFactory, responseBuilder } = handlerInput;
+    const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
+     console.log("apiAccessToken: ", apiAccessToken);
 
     try {
       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
 
-      // const responseArray = await Promise.all([
-      //   axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
-      //     { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-      //   ),
-      //   axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
-      //     { headers: { Authorization: `Bearer ${apiAccessToken}` } },
-      //   ),
-      // ])
+      const responseArray = await Promise.all([
+        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
+          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+        ),
+        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
+          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+        ),
+      ])
 
-      // const email = responseArray[0].data;
-      // const name = responseArray[1].data;
-      // console.log("email: ", email);
+      const email = responseArray[0].data;
+      const name = responseArray[1].data;
+      console.log("email: ", email);
 
-      // if (!email) {
-      //   return handlerInput.responseBuilder
-      //     .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
-      //     .getResponse();
-      // }
+      if (!email) {
+        return handlerInput.responseBuilder
+          .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
+          .getResponse();
+      }
 
-      const order = `Mr ${name} your order for ${dishName} ${qty} quantity this is placed. You will soon get a call for confirmation! Thank you for order`;
-      var newOrder = new Order({
-        userName: name,
-        email: email,
-        order:order,
-      }).save();
+      try {
+        let updated = await Cart.findOneAndUpdate(
+          { email: email },
+          {
+            email: email,
+            customerName: name,
+            $push: {
+              items: [{
+                dishName: dishName,
+                quantity: qty
+              }]
+            }
+          },
+          { upsert: true }).exec();
 
-      return handlerInput.responseBuilder
-        .speak(order)
-        .getResponse();
+        console.log("added to cart: ", updated);
+        return handlerInput.responseBuilder
+          .speak(`Dear ${name}, ${qty} ${dishName} is added in your cart, 
+               feel free to add more dishes
+               or say checkout to complete your order`)
+          .getResponse();
 
-    } catch (error) {
+
+      } catch (err) {
+        console.log("error in db: ", err);
+        return handlerInput.responseBuilder
+          .speak(`something went wrong in db operation`)
+          .getResponse();
+      }
+
+   } catch (error) {
       console.log("error code: ", error.response.status);
 
       if (error.response.status === 403) {
@@ -227,7 +200,6 @@ const PlaceOrderHandler = {
     }
   }
 }
-
 
 const skillBuilder = SkillBuilders.custom()
   .addRequestHandlers(
