@@ -201,6 +201,74 @@ const PlaceOrderHandler = {
   }
 }
 
+const checkOutHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'PlaceOrder';
+  },
+  async handle(handlerInput) {
+
+
+    const slots = handlerInput
+      .requestEnvelope
+      .request
+      .intent
+      .slots;
+
+    try {
+      // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
+
+      const responseArray = await Promise.all([
+        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
+          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+        ),
+        axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name",
+          { headers: { Authorization: `Bearer ${apiAccessToken}` } },
+        ),
+      ])
+
+      const email = responseArray[0].data;
+      const name = responseArray[1].data;
+      console.log("email: ", email);
+
+      try {
+        let updated = await Cart.findOne({email:email},(err,carts)=>{
+          
+        })
+
+        console.log("added to cart: ", updated);
+        return handlerInput.responseBuilder
+          .speak(`Dear ${name}, ${qty} ${dishName} is added in your cart, 
+               feel free to add more dishes
+               or say checkout to complete your order`)
+          .getResponse();
+
+
+      } catch (err) {
+        console.log("error in db: ", err);
+        return handlerInput.responseBuilder
+          .speak(`something went wrong in db operation`)
+          .getResponse();
+      }
+
+   } catch (error) {
+      console.log("error code: ", error.response.status);
+
+      if (error.response.status === 403) {
+        return responseBuilder
+          .speak('I am Unable to read your email. Please goto Alexa app and then goto Malik Resturant Skill and Grant Profile Permissions to this skill')
+          .withAskForPermissionsConsentCard(["alexa::profile:email:read"]) // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#sample-response-with-permissions-card
+          .getResponse();
+      }
+      return responseBuilder
+        .speak('Uh Oh. Looks like something went wrong.')
+        .getResponse();
+    }
+  }
+}
+
+
+
 const skillBuilder = SkillBuilders.custom()
   .addRequestHandlers(
     LaunchRequestHandler,
