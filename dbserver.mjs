@@ -59,7 +59,7 @@ const LaunchRequestHandler = {
 
     var newUsage = new Usage({
       skillName: "food ordering skill",
-      clientName: "My Project",
+      clientName: "Ginsoy Extreme Chinese",
     }).save();
 
     const speakOutput = 'Welcome to Ginsoy Extreme Chinese, I am your virtual assistant. you can ask for the menu';
@@ -201,13 +201,12 @@ const PlaceOrderHandler = {
   }
 }
 
-const checkOutHandler = {
+const checkOutIntentHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'PlaceOrder';
+      && handlerInput.requestEnvelope.request.intent.name === 'checkOut';
   },
   async handle(handlerInput) {
-
 
     const slots = handlerInput
       .requestEnvelope
@@ -215,9 +214,15 @@ const checkOutHandler = {
       .intent
       .slots;
 
+    const confirmation = slots.confirmation.value;
+    console.log("confirmation: ", confirmation);
+
     try {
       // https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-customer-contact-information-for-use-in-your-skill.html#get-customer-contact-information
 
+      const { serviceClientFactory, responseBuilder } = handlerInput;
+      const apiAccessToken = Alexa.getApiAccessToken(handlerInput.requestEnvelope)
+      // console.log("apiAccessToken: ", apiAccessToken);
       const responseArray = await Promise.all([
         axios.get("https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.email",
           { headers: { Authorization: `Bearer ${apiAccessToken}` } },
@@ -231,27 +236,87 @@ const checkOutHandler = {
       const name = responseArray[1].data;
       console.log("email: ", email);
 
-      try {
-        let updated = await Cart.findOne({email:email},(err,carts)=>{
-          
-        })
-
-        console.log("added to cart: ", updated);
+      if (!email) {
         return handlerInput.responseBuilder
-          .speak(`Dear ${name}, ${qty} ${dishName} is added in your cart, 
-               feel free to add more dishes
-               or say checkout to complete your order`)
-          .getResponse();
-
-
-      } catch (err) {
-        console.log("error in db: ", err);
-        return handlerInput.responseBuilder
-          .speak(`something went wrong in db operation`)
+          .speak(`looks like you dont have an email associated with this device, please set your email in Alexa App Settings`)
           .getResponse();
       }
 
-   } catch (error) {
+
+      try {
+
+        let userCart = await Cart.findOne({ email: email }).exec();
+        var orderText = "you have ";
+        if (!confirmation) {
+
+          let speech = "you have ";
+          let cardText = "";
+
+          userCart.items.map((eachItem, index) => {
+
+            if (index === (userCart.items.length - 1)) { // last item
+
+              speech += `and ${eachItem.quantity} ${eachItem.dishName}. `
+              cardText += `${index + 1}. ${eachItem.dishName} x ${eachItem.quantity}\n`
+
+            } else {
+              speech += ` ${eachItem.quantity} ${eachItem.dishName}, `
+              cardText += `${index + 1}. ${eachItem.dishName} x ${eachItem.quantity}\n`
+            }
+          })
+
+          speech += "please say yes to confirm."
+          cardText += "Are you sure?"
+
+          console.log("order : ", orderText);
+
+          return handlerInput.responseBuilder
+            .speak(speech)
+            .reprompt(`please say yes or no`)
+            .withSimpleCard("Your Cart", cardText)
+            .getResponse();
+
+
+        } else if (confirmation === "yes") {
+
+          userCart.items.map((eachItem, index) => {
+            if (index === (userCart.items.length - 1)) { // last item
+              orderText += `and ${eachItem.quantity} ${eachItem.dishName}. `
+            } else {
+              orderText += ` ${eachItem.quantity} ${eachItem.dishName}, `
+            }
+          })
+
+          orderText += " your order is completed, thank you.";
+
+          let newOrder = new Order({
+            userName: userCart.customerName,
+            email: userCart.email,
+            order: orderText,
+          })
+
+          console.log("New Order : ",newOrder);
+          let saved = await newOrder.save();
+
+          return handlerInput.responseBuilder
+            .speak("your order is completed, thank you.")
+            .withSimpleCard("", "Thanks you")
+            .getResponse();
+
+        } else {
+
+          return handlerInput.responseBuilder
+            .speak("ok cancel. feel free to add more items or say delete cart to start order from scratch.")
+            .reprompt("tell me a dish name or you can ask me for the menu")
+            .getResponse();
+
+        }
+
+      } catch (e) {
+        console.log(e)
+      }
+
+    } catch (error) {
       console.log("error code: ", error.response.status);
 
       if (error.response.status === 403) {
@@ -275,7 +340,8 @@ const skillBuilder = SkillBuilders.custom()
     showMenuHandler,
     // EmailIntentHandler,
     // deviceIdHandler,
-     PlaceOrderHandler
+     PlaceOrderHandler,
+     checkOutIntentHandler
   )
   .addErrorHandlers(
     ErrorHandler
